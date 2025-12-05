@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Meeting Scheduler</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    textarea, input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #responseBox {
+      white-space: pre-wrap;
+      background: #eee;
+      padding: 15px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>AI Meeting Scheduler</h2>
+
+  <label>Enter your meeting request:</label>
+  <textarea id="userMessage" rows="5" placeholder="Example: Schedule a meeting tomorrow at 3pm with Sarah"></textarea>
+
+  <button onclick="sendRequest()">Send</button>
+
+  <h3>AI Response:</h3>
+  <div id="responseBox">Waiting for request...</div>
+
+  <script>
+    async function sendRequest() {
+      const message = document.getElementById("userMessage").value;
+      const responseBox = document.getElementById("responseBox");
+
+      responseBox.textContent = "Sending request...";
+
+      try {
+        const res = await fetch("https://kaizo.app.n8n.cloud/webhook/meeting-scheduler", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await res.json();
+        responseBox.textContent = JSON.stringify(data, null, 2);
+
+      } catch (error) {
+        responseBox.textContent = "Error: " + error.message;
+      }
+    }
+  </script>
+
+</body>
+</html>
