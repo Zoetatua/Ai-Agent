@@ -1,66 +1,153 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI Meeting Scheduler</title>
+  <title>AI Meeting Scheduler Chat</title>
   <style>
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
-      margin: 40px;
+      background: #f5f5f5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
-    textarea, input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
+
+    /* Chat Container */
+    #chat-container {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Bubbles */
+    .bubble {
+      max-width: 75%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 15px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    .user {
+      align-self: flex-end;
+      background: #007bff;
+      color: white;
+      border-bottom-right-radius: 0;
+    }
+
+    .bot {
+      align-self: flex-start;
+      background: white;
+      color: #333;
+      border-bottom-left-radius: 0;
+      border: 1px solid #ddd;
+    }
+
+    /* Input area */
+    #input-container {
+      display: flex;
+      padding: 15px;
+      background: #fff;
+      border-top: 1px solid #ddd;
+    }
+
+    #messageInput {
+      flex: 1;
+      padding: 12px;
       font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
     }
-    button {
+
+    #sendBtn {
+      margin-left: 10px;
       padding: 12px 20px;
       font-size: 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
     }
-    #responseBox {
-      white-space: pre-wrap;
-      background: #eee;
-      padding: 15px;
-      margin-top: 20px;
+
+    #sendBtn:hover {
+      background: #0066d6;
     }
+
   </style>
 </head>
 <body>
 
-  <h2>AI Meeting Scheduler</h2>
+  <!-- CHAT WINDOW -->
+  <div id="chat-container"></div>
 
-  <label>Enter your meeting request:</label>
-  <textarea id="userMessage" rows="5" placeholder="Example: Schedule a meeting tomorrow at 3pm with Sarah"></textarea>
-
-  <button onclick="sendRequest()">Send</button>
-
-  <h3>AI Response:</h3>
-  <div id="responseBox">Waiting for request...</div>
+  <!-- INPUT BAR -->
+  <div id="input-container">
+    <input id="messageInput" type="text" placeholder="Type your message..." />
+    <button id="sendBtn" onclick="sendMessage()">Send</button>
+  </div>
 
   <script>
-    async function sendRequest() {
-      const message = document.getElementById("userMessage").value;
-      const responseBox = document.getElementById("responseBox");
+    const webhookUrl = "https://kaizo.app.n8n.cloud/webhook/meeting-scheduler"; // 🔥 PUT YOUR WEBHOOK URL HERE
+    const chat = document.getElementById("chat-container");
 
-      responseBox.textContent = "Sending request...";
+    // Add message to chat window
+    function addMessage(text, sender) {
+      const bubble = document.createElement("div");
+      bubble.classList.add("bubble", sender);
+      bubble.textContent = text;
+      chat.appendChild(bubble);
+      chat.scrollTop = chat.scrollHeight; // Auto-scroll
+    }
+
+    // Send message to webhook
+    async function sendMessage() {
+      const input = document.getElementById("messageInput");
+      const message = input.value.trim();
+      if (!message) return;
+
+      // Show user message
+      addMessage(message, "user");
+      input.value = "";
+
+      // Show bot "thinking..."
+      const thinkingBubble = document.createElement("div");
+      thinkingBubble.classList.add("bubble", "bot");
+      thinkingBubble.textContent = "Thinking...";
+      chat.appendChild(thinkingBubble);
+      chat.scrollTop = chat.scrollHeight;
 
       try {
-        const res = await fetch("https://kaizo.app.n8n.cloud/webhook/meeting-scheduler", {
+        const res = await fetch(webhookUrl, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message })
         });
 
         const data = await res.json();
-        responseBox.textContent = JSON.stringify(data, null, 2);
 
-      } catch (error) {
-        responseBox.textContent = "Error: " + error.message;
+        // Replace "Thinking..." with real message
+        thinkingBubble.remove();
+
+        // Show AI response, formatted nicely
+        addMessage(JSON.stringify(data, null, 2), "bot");
+
+      } catch (err) {
+        thinkingBubble.remove();
+        addMessage("Error: " + err.message, "bot");
       }
     }
+
+    // Press Enter to send
+    document.getElementById("messageInput")
+      .addEventListener("keypress", function(e) {
+        if (e.key === "Enter") sendMessage();
+      });
+
   </script>
 
 </body>
